@@ -1,74 +1,62 @@
-// explore.js
+// expose.js
 window.addEventListener('DOMContentLoaded', init);
 
 function init() {
-  //get dom elements
-  const textArea = document.getElementById('text-to-speak');
-  const voiceSelect = document.getElementById('voice-select');
-  const talkButton = document.querySelector('#explore button');
-  const faceImage = document.querySelector('#explore img');
+  const hornSelect = document.getElementById('horn-select');
+  const hornImage = document.querySelector('#expose img');
+  const volumeSlider = document.getElementById('volume');
+  const volumeIcon = document.querySelector('#volume-controls img');
+  const playButton = document.querySelector('#expose button');
+  const audioElement = document.querySelector('audio');
   
-  //initialize speech synthesis
-  const synth = window.speechSynthesis;
-  let voices = [];
+  const jsConfetti = new JSConfetti();
   
-  //function to populate voice select dropdown
-  function fillVoiceList() {
-    voices = synth.getVoices();
+  hornSelect.addEventListener('change', updateHorn);
+  volumeSlider.addEventListener('input', updateVolume);
+  playButton.addEventListener('click', playSound);
+  
+  function updateHorn() {
+    const selectedHorn = hornSelect.value;
+    
+    //update image and audio source based on selection
+    if (selectedHorn === 'air-horn') {
+      hornImage.src = 'assets/images/air-horn.svg';
+      audioElement.src = 'assets/audio/air-horn.mp3';
+    } else if (selectedHorn === 'car-horn') {
+      hornImage.src = 'assets/images/car-horn.svg';
+      audioElement.src = 'assets/audio/car-horn.mp3';
+    } else if (selectedHorn === 'party-horn') {
+      hornImage.src = 'assets/images/party-horn.svg';
+      audioElement.src = 'assets/audio/party-horn.mp3';
+    }
   }
   
-  //initial population attempt
-  fillVoiceList();
-  
-  //chrome needs this event to load voices
-  synth.onvoiceschanged = function() {
-    fillVoiceList();
-  };
-  
-  //manual check for talking state
-  let isTalking = false;
-  
-  //function to check speaking status repeatedly
-  function checkSpeaking() {
-    if (synth.speaking !== isTalking) {
-      isTalking = synth.speaking;
-      //update face image based on speaking status
-      faceImage.src = isTalking ? 
-        'assets/images/smiling-open.png' : 
-        'assets/images/smiling.png';
-    }
+  function updateVolume() {
+    const volume = volumeSlider.value;
     
-    //continue checking while speech synthesis is active
-    requestAnimationFrame(checkSpeaking);
+    //set volume
+    audioElement.volume = volume / 100;
+    
+    //change icon
+    if (volume == 0) {
+      volumeIcon.src = 'assets/icons/volume-level-0.svg';
+    } else if (volume < 33) {
+      volumeIcon.src = 'assets/icons/volume-level-1.svg';
+    } else if (volume < 67) {
+      volumeIcon.src = 'assets/icons/volume-level-2.svg';
+    } else {
+      volumeIcon.src = 'assets/icons/volume-level-3.svg';
+    }
   }
   
-  //start the continuous checking
-  checkSpeaking();
+  function playSound() {
+    audioElement.play();
   
-  //function to speak the text
-  function speak() {
-    //cancel any current speech
-    synth.cancel();
-    
-    const text = textArea.value.trim();
-    if (text === '') {
-      alert('Please enter some text to speak');
-      return;
+    if (hornSelect.value === 'party-horn') {
+      jsConfetti.addConfetti();
     }
-    
-    //create utterance with the text
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    //set selected voice if one is chosen
-    if (voiceSelect.selectedIndex > 0) {
-      const selectedIndex = parseInt(voiceSelect.value);
-      utterance.voice = voices[selectedIndex];
-    }
-    
-    //start speaking
-    synth.speak(utterance);
   }
   
-  //add event listener to talk button
-  talkButton.addEventListener('click', speak);
+  //set initial volume based on slider value
+  updateVolume();
 }
